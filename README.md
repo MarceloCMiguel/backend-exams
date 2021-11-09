@@ -1,5 +1,7 @@
 # backend-exams
 
+**Integrantes: Marcelo Cesário, André Tavernaro e Antonio Fuziy**
+
 Este repositório contém o código do backend, que implementa uma API RESTful para servir os dados de uma disciplina.
 Esta aplicação foi feita utilizando FastAPI, SQLAlchemy e MySQL.
 
