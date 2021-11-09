@@ -6,13 +6,11 @@ from pydantic import BaseModel
 import uvicorn
 
 from src.schema.subject import Subject
-from src.schema.grade import Grade
+from src.schema.note import Note
 app = FastAPI()
 
 subjects= []
-grades=[]
-
-router_subject = APIRouter()
+notes=[]
 
 @app.get("/")
 async def root():
@@ -21,12 +19,22 @@ async def root():
     """
     return {"message": "Hello World"}
 
+router_subject = APIRouter()
+
+
+
 @router_subject.get("/")
 async def get_subjects():
+    """
+    Get all the subjects
+    """
     return subjects
 
 @router_subject.get("/{name}")
 async def get_subject(name:str):
+    """
+    Get a specific subject indentified by an id
+    """
     for subject in subjects:
         if subject.name == name:
             return subject
@@ -34,6 +42,9 @@ async def get_subject(name:str):
 
 @router_subject.get("/get_names/")
 async def get_subjects_name():
+    """
+    Get all the subjects names
+    """
     list_names= []
     for subject in subjects:
         list_names.append(subject.name)
@@ -42,6 +53,9 @@ async def get_subjects_name():
 
 @router_subject.post("/")
 async def create_subjects(item: Subject):
+    """
+    Create a Subject by passing the name, teacher name (optional) and a description
+    """
     for subject in  subjects:
         if subject.name == item.name:
             raise HTTPException(status_code=400, detail="Name already in use")
@@ -51,6 +65,9 @@ async def create_subjects(item: Subject):
 
 @router_subject.delete("/{name}")
 async def delete_subject(name: str):
+    """
+    Delete a subject specifying by an id
+    """
     for subject in subjects:
         if subject.name == name:
             subjects.remove(subject)
@@ -60,6 +77,9 @@ async def delete_subject(name: str):
 
 @router_subject.put("/{name}")
 async def update_subject(name:str, item: Subject):
+    """
+    Change a subject specifying by an id
+    """
     count = 0
     for subject in subjects:
         if subject.name == name:
@@ -69,64 +89,78 @@ async def update_subject(name:str, item: Subject):
     raise HTTPException(status_code=400, detail="Name not found")
 
 app.include_router(router_subject, prefix="/subjects",tags=["Subjects"])
-# Grades    
-router_grade = APIRouter()
 
-def check_subject(grade: Grade, subjects):
+# notes    
+router_Note = APIRouter()
+
+def check_subject(note: Note, subjects):
+    '''
+    check if a subject exist
+    '''
     for subject in subjects:
-        if subject.name == grade.subject_name:
+        if subject.name == note.subject_name:
             return True
     return False
 
-def find_last_grade_id(grades):
-    if len(grades) ==0:
+def find_last_Note_id(notes):
+    '''
+    find last id of notes created and return that
+    '''
+    if len(notes) ==0:
         return 0
-    last_grade = grades[-1]
-    return last_grade["id"]
+    last_Note = notes[-1]
+    return last_Note["id"]
 
-@router_grade.get("/")
-async def get_grades():
-    return grades
+@router_Note.get("/")
+async def get_notes():
+    '''
+    Get all the notes
+    '''
+    return notes
 
-@router_grade.post("/grades/")
-async def create_grades(item: Grade):    
+@router_Note.post("/notes/")
+async def create_notes(item: Note):  
+    '''
+    Create a Note by passing the subject name and the note itself
+    '''  
     if check_subject(item,subjects):
         item_ = item.dict()
-        last_id =find_last_grade_id(grades)
+        last_id =find_last_Note_id(notes)
         item_["id"] = last_id+1
-        grades.append(item_)
+        notes.append(item_)
         return item_
     raise HTTPException(status_code=400, detail="Subject not found")
 
-@router_grade.put("/{id}")
-async def put_grade(item: Grade, id: int):
+@router_Note.put("/{id}")
+async def put_Note(item: Note, id: int):
+    '''
+    Change a Note specifying by an id
+    '''
     count = 0
-    for grade in grades:
-        if grade["id"] == id:
+    for note in notes:
+        if note["id"] == id:
             if check_subject(item,subjects):
                 item_ = item.dict()
                 item_["id"] = id
-                grades[count] = item_
-                return grades[count]
+                notes[count] = item_
+                return notes[count]
 
             raise HTTPException(status_code=400, detail="Subject not found")
         count +=1
-    raise HTTPException(status_code=400, detail="Grade id not found")
+    raise HTTPException(status_code=400, detail="Note id not found")
 
-@router_grade.delete("/{id}")
-async def delete_grade(id: int):
-    for grade in grades:
-        if grade["id"] == id:
-            grades.remove(grade)
-            return {"message":f"{grade['id']} deleted"}
-    raise HTTPException(status_code=400, detail="Grade id not found")
+@router_Note.delete("/{id}")
+async def delete_Note(id: int):
+    '''
+    Delete a Note specifying by an id
+    '''
+    for note in notes:
+        if note["id"] == id:
+            notes.remove(note)
+            return {"message":f"ID {note['id']} deleted"}
+    raise HTTPException(status_code=400, detail="Note id not found")
 
-app.include_router(router_grade, prefix="/grade",tags=["Grades"])
-
-
-
-
-
+app.include_router(router_Note, prefix="/Note",tags=["Notes"])
 
 
 if __name__ == "__main__":
