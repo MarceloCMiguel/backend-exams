@@ -1,13 +1,33 @@
 from os import name
-from fastapi import FastAPI,status,HTTPException, APIRouter
+from fastapi import FastAPI,status,HTTPException, APIRouter,Depends
 
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 import uvicorn
 
-from src.schema.subject import Subject
-from src.schema.note import Note
+from src.model.subject import Subject
+from src.crud.utils import ExistenceException, NonExistenceException
+from src.schema.subject import SubjectInDB, SubjectOutDB,SubjectCreate,SubjectUpdate
+from src.schema.note import NoteInDB, NoteOutDB,NoteCreate,NoteUpdate
+from src.database.database import Base, engine,SessionLocal
+from src.crud.subject import get_all_subjects,get_subject,create_subject
+from sqlalchemy.orm import Session
+
+
+
+Base.metadata.create_all(bind=engine)
+
+
 app = FastAPI()
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 subjects= []
 notes=[]
@@ -23,13 +43,16 @@ router_subject = APIRouter()
 
 
 
-@router_subject.get("/")
-async def get_subjects():
+@router_subject.get("/", response_model=List[SubjectInDB])
+async def get_subjects(db: Session = Depends(get_db)):
     """
     Get all the subjects
     """
+    subjects = get_all_subjects(db)
     return subjects
-
+    # if subjects is None:
+    #     raise HTTPException(status_code=404, detail="User not founde")
+    # return subjects
 @router_subject.get("/{name}")
 async def get_subject(name:str):
     """
@@ -51,17 +74,21 @@ async def get_subjects_name():
     return list_names
 
 
-@router_subject.post("/")
-async def create_subjects(item: Subject):
+@router_subject.post("/", response_model=SubjectInDB)
+async def create_subjects(item: SubjectCreate,db: Session = Depends(get_db)):
     """
     Create a Subject by passing the name, teacher name (optional) and a description
     """
-    for subject in  subjects:
-        if subject.name == item.name:
-            raise HTTPException(status_code=400, detail="Name already in use")
+    try:
+        created_subject = create_subject(db=db, subject_in=item)
+    except ExistenceException as err:
+        raise HTTPException(status_code=303, detail=err.message)
+    return created_subject
 
-    subjects.append(item)
-    return item
+    subject = create_subject(db,item)
+    if subject is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return subject
 
 @router_subject.delete("/{name}")
 async def delete_subject(name: str):
@@ -76,7 +103,7 @@ async def delete_subject(name: str):
 
 
 @router_subject.put("/{name}")
-async def update_subject(name:str, item: Subject):
+async def update_subject(name:str, item: SubjectUpdate):
     """
     Change a subject specifying by an id
     """
@@ -93,7 +120,7 @@ app.include_router(router_subject, prefix="/subjects",tags=["Subjects"])
 # notes    
 router_Note = APIRouter()
 
-def check_subject(note: Note, subjects):
+def check_subject(note: NoteInDB, subjects):
     '''
     check if a subject exist
     '''
@@ -119,10 +146,10 @@ async def get_notes():
     return notes
 
 @router_Note.post("/notes/")
-async def create_notes(item: Note):  
+async def create_notes(item: NoteInDB):  
     '''
     Create a Note by passing the subject name and the note itself
-    '''  
+    '''
     if check_subject(item,subjects):
         item_ = item.dict()
         last_id =find_last_Note_id(notes)
@@ -132,7 +159,7 @@ async def create_notes(item: Note):
     raise HTTPException(status_code=400, detail="Subject not found")
 
 @router_Note.put("/{id}")
-async def put_Note(item: Note, id: int):
+async def put_Note(item: NoteUpdate, id: int):
     '''
     Change a Note specifying by an id
     '''
