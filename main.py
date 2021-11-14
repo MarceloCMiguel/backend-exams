@@ -1,3 +1,7 @@
+# ==============================================================
+# Project by Marcelo Cesário, André Tavernaro e Antonio Fuziy
+# ==============================================================
+
 from os import name
 from fastapi import FastAPI,status,HTTPException, APIRouter,Depends
 
