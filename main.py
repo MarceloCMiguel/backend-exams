@@ -14,7 +14,8 @@ from src.crud.utils import ExistenceException, NonExistenceException
 from src.schema.subject import SubjectInDB, SubjectOutDB,SubjectCreate,SubjectUpdate
 from src.schema.note import NoteInDB, NoteOutDB,NoteCreate,NoteUpdate
 from src.database.database import Base, engine,SessionLocal
-from src.crud.subject import get_all_subjects,get_subject,create_subject
+from src.crud.subject import get_all_subjects, get_subject, create_subject
+from src.crud.note import get_all_notes, delete_note, create_note, update_note
 from sqlalchemy.orm import Session
 
 
@@ -86,7 +87,7 @@ async def create_subjects(item: SubjectCreate,db: Session = Depends(get_db)):
     try:
         created_subject = create_subject(db=db, subject_in=item)
     except ExistenceException as err:
-        raise HTTPException(status_code=303, detail=err.message)
+        raise HTTPException(status_code=400, detail=err.message)
     return created_subject
 
     subject = create_subject(db,item)
@@ -142,25 +143,43 @@ def find_last_Note_id(notes):
     last_Note = notes[-1]
     return last_Note["id"]
 
-@router_Note.get("/")
-async def get_notes():
+# ==================================================================
+# Alteracoes Fuziy e Tavernas
+'''
+
+- get_notes
+- create_notes
+
+PRECISAM DE TESTE
+
+'''
+# ==================================================================
+
+@router_Note.get("/", response_model=List[NoteInDB])
+async def get_notes(db: Session = Depends(get_db)):
     '''
     Get all the notes
     '''
+    notes = get_all_notes(db)
     return notes
 
-@router_Note.post("/notes/")
-async def create_notes(item: NoteInDB):  
+@router_Note.post("/notes/", response_model=NoteInDB)
+async def create_notes(item: NoteCreate, db: Session = Depends(get_db)):  
     '''
     Create a Note by passing the subject name and the note itself
     '''
-    if check_subject(item,subjects):
-        item_ = item.dict()
-        last_id =find_last_Note_id(notes)
-        item_["id"] = last_id+1
-        notes.append(item_)
-        return item_
-    raise HTTPException(status_code=400, detail="Subject not found")
+    try:
+        created_note = create_note(db=db, note_in=item)
+    except ExistenceException as err:
+        raise HTTPException(status_code=400, detail=err.message)
+    return created_note
+    # if check_subject(item,subjects):
+    #     item_ = item.dict()
+    #     last_id =find_last_Note_id(notes)
+    #     item_["id"] = last_id+1
+    #     notes.append(item_)
+    #     return item_
+    # raise HTTPException(status_code=400, detail="Subject not found")
 
 @router_Note.put("/{id}")
 async def put_Note(item: NoteUpdate, id: int):
