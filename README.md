@@ -10,7 +10,7 @@ Esta aplicação foi feita utilizando FastAPI, SQLAlchemy e MySQL.
 - Obrigatórios: [Python 3.6 (ou superior)](https://www.python.org/downloads/)
 
 ### Banco de dados
-O banco de dados da aplicação, MySQL, ainda não está sendo utilizado. No futuro, deve estar instalado e em execução no seu computador.
+O banco de dados da aplicação, MySQL deve estar instalado e em execução no seu computador. Os dados do seu environment devem conter as configs necessárias, sendo chamadas em database.py, localizado na pasta database
 
 ### Executando
 A aplicação pode ser executada via terminal pelo
