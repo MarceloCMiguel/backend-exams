@@ -8,7 +8,7 @@ class Note(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     note= Column(String(80))
-    subject_name= Column(String(80), ForeignKey("subjects.name"),nullable=False)
+    subject_name= Column(String(80), ForeignKey("subjects.name",ondelete='CASCADE',onupdate='CASCADE'),nullable=False)
     subjects = relationship(Subject, primaryjoin=subject_name == Subject.name)
     
 
