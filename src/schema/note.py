@@ -18,7 +18,8 @@ class NoteOutDB(BaseModel):
     id: int
     subject_name: str
     note: str
-
+    class Config:
+        orm_mode = True
 
 
 class NoteCreate(BaseModel):
