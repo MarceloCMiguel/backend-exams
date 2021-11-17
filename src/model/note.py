@@ -7,7 +7,9 @@ class Note(Base):
     __tablename__ = "notes"
 
     id = Column(Integer, primary_key=True, index=True)
-    subject_name= Column(String(80), ForeignKey("subject.name"),nullable=False)
+    note= Column(String(80))
+    subject_name= Column(String(80), ForeignKey("subjects.name"),nullable=False)
     subjects = relationship(Subject, primaryjoin=subject_name == Subject.name)
-    note: Column(String(80),nullable=False, index=False)
+    
+
 

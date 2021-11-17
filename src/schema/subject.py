@@ -37,4 +37,5 @@ class SubjectUpdate(BaseModel):
     teacher_name: Optional[str]
     description: Optional[str]
 
-
+class SubjectName(BaseModel):
+    name: str
